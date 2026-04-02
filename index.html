@@ -2,8 +2,18 @@
 <html>
 <head>
 <title>Smart Parking Dashboard</title>
+
 <style>
-body { font-family: Arial; background: #0f172a; color: white; text-align: center; }
+body {
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
+
+h1 {
+  color: #22c55e;
+}
 
 .grid {
   display: grid;
@@ -16,36 +26,52 @@ body { font-family: Arial; background: #0f172a; color: white; text-align: center
 .slot {
   padding: 30px;
   border-radius: 10px;
+  font-size: 18px;
 }
 
-.free { background: green; }
-.occupied { background: red; }
+.free {
+  background: green;
+}
 
-button { margin: 10px; padding: 10px; }
+.occupied {
+  background: red;
+}
+
+button {
+  margin: 10px;
+  padding: 10px;
+}
+
+table {
+  margin: auto;
+  margin-top: 20px;
+  border-collapse: collapse;
+}
+
+td, th {
+  padding: 10px;
+  border: 1px solid white;
+}
 </style>
+
 </head>
 
 <body>
 
 <h1>🚗 Smart Parking Dashboard</h1>
 
-<button onclick="loadSlots()">Refresh Slots</button>
+<button onclick="loadSlots()">🔄 Refresh Slots</button>
+<button onclick="loadLogs()">📋 Load Logs</button>
 
 <div class="grid" id="grid"></div>
 
 <h2 id="count"></h2>
 
-<hr>
-
-<h2>💾 Store Dummy Entry</h2>
-<button onclick="storeData()">Add Entry</button>
-
-<h2>📋 Logs</h2>
-<button onclick="loadLogs()">Load Logs</button>
-
+<h2>📊 Parking Logs</h2>
 <div id="logs"></div>
 
 <script>
+
 function loadSlots() {
   fetch("/api/slots")
     .then(res => res.json())
@@ -65,31 +91,32 @@ function loadSlots() {
     });
 }
 
-function storeData() {
-  fetch("/api/store", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      plate: "AP01AB1234",
-      slot: 1,
-      status: "occupied"
-    })
-  }).then(() => alert("Stored in DB"));
-}
 
 function loadLogs() {
   fetch("/api/logs")
     .then(res => res.json())
     .then(data => {
-      let html = "";
+      let html = "<table>";
+      html += "<tr><th>Plate</th><th>Slot</th><th>Status</th><th>Time</th></tr>";
+
       data.forEach(l => {
-        html += `<p>${l.plate} | Slot ${l.slot} | ${l.status} | ${l.time}</p>`;
+        html += `<tr>
+          <td>${l.plate}</td>
+          <td>${l.slot}</td>
+          <td>${l.status}</td>
+          <td>${l.time}</td>
+        </tr>`;
       });
+
+      html += "</table>";
+
       document.getElementById("logs").innerHTML = html;
     });
 }
 
 loadSlots();
+setInterval(loadSlots, 3000);
+
 </script>
 
 </body>
