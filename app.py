@@ -1,27 +1,28 @@
 from flask import Flask, jsonify, request, redirect, send_from_directory
 from pymongo import MongoClient
 from datetime import datetime
+import requests
 
 app = Flask(__name__)
 
-# 🔗 MongoDB connection (FINAL WORKING)
+# 🔗 MongoDB
 MONGO_URL = "mongodb+srv://admin:admin123@cluster0.vjwxtdc.mongodb.net/?retryWrites=true&w=majority"
 
 try:
     client = MongoClient(MONGO_URL)
     db = client["parking"]
     collection = db["logs"]
-    print("✅ MongoDB Connected")
+    print("MongoDB Connected")
 except Exception as e:
-    print("❌ MongoDB Error:", e)
+    print("MongoDB Error:", e)
     collection = None
 
 # 🔐 Login
 USERNAME = "admin"
 PASSWORD = "1234"
 
-# 🅿️ Slot data
-slots = [False, True, False, True, False, False]
+# 🌐 ESP32 URL (change if needed)
+ESP32_URL = "http://192.168.4.1"
 
 # ================= ROUTES =================
 
@@ -45,17 +46,27 @@ def dashboard():
     return send_from_directory('.', 'index.html')
 
 
-# 📊 Get slot status
+# 📊 REAL SLOT DATA FROM ESP32
 @app.route("/api/slots")
 def get_slots():
-    return jsonify({
-        "slots": slots,
-        "occupied": sum(slots),
-        "total": len(slots)
-    })
+    try:
+        res = requests.get(f"{ESP32_URL}/get_slots", timeout=3)
+        data = res.json()
+
+        return jsonify({
+            "slots": data["slots"],
+            "occupied": sum(data["slots"]),
+            "total": len(data["slots"])
+        })
+    except:
+        return jsonify({
+            "slots": [False]*6,
+            "occupied": 0,
+            "total": 6
+        })
 
 
-# 💾 Store data in MongoDB
+# 💾 STORE DATA FROM OCR
 @app.route("/api/store", methods=["POST"])
 def store_data():
     if collection is None:
@@ -72,10 +83,10 @@ def store_data():
 
     collection.insert_one(record)
 
-    return {"message": "Data Stored Successfully"}
+    return {"message": "Stored"}
 
 
-# 📋 Get logs
+# 📋 GET LOGS
 @app.route("/api/logs")
 def get_logs():
     if collection is None:
@@ -85,6 +96,6 @@ def get_logs():
     return jsonify(logs)
 
 
-# ================= RUN =================
+# 🚀 RUN
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
