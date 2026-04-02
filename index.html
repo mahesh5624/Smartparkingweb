@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Parking</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      color: #22c55e;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 150px);
+      gap: 20px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .slot {
+      padding: 30px;
+      border-radius: 10px;
+      font-size: 18px;
+    }
+
+    .free {
+      background: #16a34a;
+    }
+
+    .occupied {
+      background: #dc2626;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🚗 Smart Parking Dashboard</h1>
+
+<button onclick="loadSlots()">Refresh Slots</button>
+
+<div class="grid" id="grid"></div>
+
+<h2 id="count"></h2>
+
+<script>
+function loadSlots() {
+  fetch("/api/slots")
+    .then(res => res.json())
+    .then(data => {
+      let grid = document.getElementById("grid");
+      grid.innerHTML = "";
+
+      data.slots.forEach((s, i) => {
+        let div = document.createElement("div");
+        div.className = "slot " + (s ? "occupied" : "free");
+        div.innerHTML = `Slot ${i+1}<br>${s ? "Occupied" : "Free"}`;
+        grid.appendChild(div);
+      });
+
+      document.getElementById("count").innerText =
+        `Occupied: ${data.occupied} / ${data.total}`;
+    });
+}
+
+// auto load
+loadSlots();
+setInterval(loadSlots, 5000);
+</script>
+
+</body>
+</html>
